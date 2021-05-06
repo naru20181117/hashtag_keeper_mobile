@@ -29,13 +29,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     setState(() {
-      _input.add('value') ;
+      _input.add('value');
     });
   }
 
   void _decleaseCounter(index) {
     setState(() {
-      _input.removeAt(index) ;
+      _input.removeAt(index);
     });
   }
 
@@ -44,7 +44,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _input[index] = text;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -56,40 +55,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-
             Text(
               'You have pushed the button this many times:',
             ),
-            ..._input.map((i) => Row(
-              children: [
-                RaisedButton(
-                onPressed: () => _decleaseCounter(_input.indexOf(i)),
-                child: Icon(Icons.close)
-                ),
-                Container(
-                  child: TextField(
-                    onChanged: (text) => _editText(_input.indexOf(i), text),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'New hashtag',
+            ..._input.map((i) => Row(children: [
+                  ElevatedButton(
+                      onPressed: () => _decleaseCounter(_input.indexOf(i)),
+                      child: Icon(Icons.close)),
+                  Container(
+                    child: TextField(
+                      onChanged: (text) => _editText(_input.indexOf(i), text),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'New hashtag',
+                      ),
                     ),
+                    width: MediaQuery.of(context).size.width * 0.3,
                   ),
-                  width: MediaQuery.of(context).size.width * 0.3,
-                ),
-                Text(
-                '$i',
-                style: Theme.of(context).textTheme.display1,
-              ),
-              RaisedButton(
-                onPressed: _incrementCounter,
-                child: Icon(Icons.copy)
-                ),
-              ]
-            )),
+                  Text(
+                    '$i',
+                    style: Theme.of(context).textTheme.display1,
+                  ),
+                  ElevatedButton(
+                      onPressed: _incrementCounter, child: Icon(Icons.copy)),
+                ])),
             ElevatedButton(
               onPressed: _incrementCounter,
-              child: Icon(Icons.add
-              ),
+              child: Icon(Icons.add),
             ),
           ],
         ),
