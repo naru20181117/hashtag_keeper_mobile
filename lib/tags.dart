@@ -1,84 +1,34 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+// import 'package:clipboard/clipboard.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import './tags.dart';
 
 // void main() => runApp(MyApp());
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
-}
-// void main() async {
-//   await Firebase.initializeApp();
-//   WidgetsFlutterBinding.ensureInitialized();
-//   runApp(App());
-// }
 
-// class App extends StatefulWidget {
-//   // Create the initialization Future outside of `build`:
-//   @override
-//   _AppState createState() => _AppState();
-// }
-
-// class _AppState extends State<App> {
-//   // final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+// class MyApp extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) {
-//     return FutureBuilder(
-//       // Initialize FlutterFire:
-//       future: Firebase.initializeApp(),
-//       builder: (context, snapshot) {
-//         // Check for errors
-//         if (snapshot.hasError) {
-//           // return SomethingWentWrong();
-//         }
-
-//         // Once complete, show your application
-//         if (snapshot.connectionState == ConnectionState.done) {
-//           return MyApp();
-//         }
-
-//         // Otherwise, show something whilst waiting for initialization to complete
-//         // return Loading();
-//       },
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'Flutter Demo',
+//       theme: ThemeData(
+//         primarySwatch: Colors.orange,
+//       ),
+//       home: MyHomePage(title: 'Hashtags Keeper'),
 //     );
 //   }
 // }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-      ),
-      routes: {
-        '/': (context) => MyHomePage(title: 'Hashtags Keeper'),
-        '/tags': (context) => TagsPage(title: 'Hashtag'),
-      },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+class TagsPage extends StatefulWidget {
+  TagsPage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<TagsPage> {
   List<String> _input = [];
-
-  CollectionReference categorys =
-      FirebaseFirestore.instance.collection('categorys');
 
   void _incrementHash() {
     setState(() {
@@ -98,16 +48,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future<void> addCategory() {
-    // await Firebase.initializeApp();
-    return categorys
-        .add({
-          'category': 'aaa',
-        })
-        .then((value) => print("User Added"))
-        .catchError((error) => print("Failed to add user: $error"));
-  }
-
   // void _copyHash(value) {
   //   setState(() {
   //     final data = ClipboardData(text: value);
@@ -120,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title ?? 'default'),
+        title: Text(widget.title),
       ),
       body: Center(
         child: Column(
@@ -151,11 +91,21 @@ class _MyHomePageState extends State<MyHomePage> {
                         style: Theme.of(context).textTheme.headline4,
                       ),
                       ElevatedButton(
-                          onPressed: addCategory, child: Icon(Icons.copy)),
+                          onPressed: _incrementHash, child: Icon(Icons.copy)),
                     ])),
             ElevatedButton(
               onPressed: _incrementHash,
               child: Icon(Icons.add),
+            ),
+            // Spacer(flex: 4),
+            ElevatedButton(
+              child: const Text('まとめてコピー'),
+              style: ElevatedButton.styleFrom(
+                primary: Colors.orange[200],
+                onPrimary: Colors.black,
+                elevation: 8,
+              ),
+              onPressed: () {},
             ),
           ],
         ),
