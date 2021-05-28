@@ -1,51 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-// import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import './tags.dart';
 
-// void main() => runApp(MyApp());
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MyApp());
 }
-// void main() async {
-//   await Firebase.initializeApp();
-//   WidgetsFlutterBinding.ensureInitialized();
-//   runApp(App());
-// }
-
-// class App extends StatefulWidget {
-//   // Create the initialization Future outside of `build`:
-//   @override
-//   _AppState createState() => _AppState();
-// }
-
-// class _AppState extends State<App> {
-//   // final Future<FirebaseApp> _initialization = Firebase.initializeApp();
-//   @override
-//   Widget build(BuildContext context) {
-//     return FutureBuilder(
-//       // Initialize FlutterFire:
-//       future: Firebase.initializeApp(),
-//       builder: (context, snapshot) {
-//         // Check for errors
-//         if (snapshot.hasError) {
-//           // return SomethingWentWrong();
-//         }
-
-//         // Once complete, show your application
-//         if (snapshot.connectionState == ConnectionState.done) {
-//           return MyApp();
-//         }
-
-//         // Otherwise, show something whilst waiting for initialization to complete
-//         // return Loading();
-//       },
-//     );
-//   }
-// }
 
 class MyApp extends StatelessWidget {
   @override
@@ -57,8 +20,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.orange,
       ),
       routes: {
-        '/': (context) => MyHomePage(title: 'Hashtags Keeper'),
-        '/tags': (context) => TagsPage(title: 'Hashtag'),
+        '/': (BuildContext context) => MyHomePage(title: 'Hashtags Keeper'),
+        '/tags': (BuildContext context) => TagsPage(title: 'Hashtag'),
       },
     );
   }
@@ -75,46 +38,79 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<String> _input = [];
+  List<QueryDocumentSnapshot> hashLists = [];
 
   CollectionReference categorys =
       FirebaseFirestore.instance.collection('categorys');
 
-  void _incrementHash() {
+  var _inputController = TextEditingController();
+  var _texts = [];
+
+  void _incrementHash() async {
+    await categorys.doc().set({'title': '', 'tags': []});
+    _getHash();
+    print('-increase---------------');
+    // setState(() {
+    //   _input.add('#hashtag');
+    // });
+  }
+
+  void _decleaseHash(index, documentId) async {
+    print('----delete------');
+    print(documentId);
+    print(index);
+    await categorys.doc(documentId).delete();
     setState(() {
-      _input.add('#hashtag');
+      hashLists.removeAt(index);
     });
   }
 
-  void _decleaseHash(index) {
-    setState(() {
-      _input.removeAt(index);
-    });
+  void _editText(id, text) async {
+    await categorys.doc(id).set({'title': text});
+    _inputController = text;
+    print('------update----');
+    // setState(() {
+    //   hashLists. = hashlist.docs;
+    // });
   }
 
-  void _editText(index, text) {
-    setState(() {
-      _input[index] = text;
-    });
+  Future<void> _saveText(id, text) async {
+    print('------------------');
+    print(text);
+    print(hashLists);
+    await FirebaseFirestore.instance.collection('categorys').doc(id).set(text);
+    // setState(() {
+    //   hashLists. = hashlist.docs;
+    // });
   }
 
-  Future<void> addCategory() {
-    // await Firebase.initializeApp();
-    return categorys
-        .add({
-          'category': 'aaa',
-        })
+  Future<void> _saveHash(category) async {
+    await categorys // コレクションID
+        .doc('category')
+        .set({'name': category}) // データ
         .then((value) => print("User Added"))
         .catchError((error) => print("Failed to add user: $error"));
   }
 
-  // void _copyHash(value) {
-  //   setState(() {
-  //     final data = ClipboardData(text: value);
-  //     await Clipboard.setData(data);
-  //     print("コピーしたよ");
-  //   });
-  // }
+  Future<void> _handleCategoryTap(key) {
+    Navigator.of(context).pushNamed('/tags', arguments: key.id);
+  }
+
+  void _copyHash(value) async {
+    String hashtags = value.join(' ');
+    final data = ClipboardData(text: hashtags);
+    await Clipboard.setData(data);
+    print("コピー!");
+  }
+
+  void _getHash() async {
+    final hashlist = await categorys.get();
+    print('------------------------------');
+    print(hashlist.docs.map((a) => a.data()['title']));
+    setState(() {
+      hashLists = hashlist.docs;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,41 +125,49 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               "Ready to have hashtags",
             ),
-            ..._input.map((i) => Row(
+            ...hashLists.map((document) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
-                          onPressed: () => _decleaseHash(_input.indexOf(i)),
+                          onPressed: () => _decleaseHash(
+                              hashLists.indexOf(document), document.id),
                           child: Icon(Icons.close)),
                       Container(
                         child: TextField(
-                          onChanged: (text) =>
-                              _editText(_input.indexOf(i), text),
+                          // controller: _inputController,
+                          // controller: document['title'],
+                          onChanged: (text) => _editText(document.id, text),
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'New hashtag',
                           ),
+                          autofocus: true,
                         ),
                         width: MediaQuery.of(context).size.width * 0.3,
-                      ),
-                      Text(
-                        '$i',
-                        style: Theme.of(context).textTheme.headline4,
+                        // child: Text(document.data()['title'] ?? 'default'),
                       ),
                       ElevatedButton(
-                          onPressed: addCategory, child: Icon(Icons.copy)),
+                        onPressed: () => _handleCategoryTap(document),
+                        child: Icon(Icons.chevron_right_rounded),
+                      ),
+                      ElevatedButton(
+                          onPressed: () =>
+                              _copyHash(document['tags'].cast<String>()),
+                          child: Icon(Icons.copy)),
+                      ElevatedButton(
+                          onPressed: () => _saveText(document.id, hashLists),
+                          child: Icon(Icons.add)),
                     ])),
             ElevatedButton(
               onPressed: _incrementHash,
               child: Icon(Icons.add),
             ),
+            ElevatedButton(
+              onPressed: () => _getHash(),
+              child: Icon(Icons.get_app_outlined),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementHash,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }

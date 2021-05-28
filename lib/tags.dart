@@ -1,22 +1,14 @@
 // import 'package:clipboard/clipboard.dart';
-// import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-// void main() => runApp(MyApp());
-
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         primarySwatch: Colors.orange,
-//       ),
-//       home: MyHomePage(title: 'Hashtags Keeper'),
-//     );
-//   }
-// }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(TagsPage());
+}
 
 class TagsPage extends StatefulWidget {
   TagsPage({Key key, this.title}) : super(key: key);
@@ -25,42 +17,59 @@ class TagsPage extends StatefulWidget {
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 }
 
 class _MyHomePageState extends State<TagsPage> {
-  List<String> _input = [];
+  var _title = '';
+  List<String> _tags = [];
+
+  CollectionReference categorys =
+      FirebaseFirestore.instance.collection('categorys');
 
   void _incrementHash() {
     setState(() {
-      _input.add('#hashtag');
+      _tags.add('#hashtag');
     });
   }
 
   void _decleaseHash(index) {
     setState(() {
-      _input.removeAt(index);
+      _tags.removeAt(index);
     });
   }
 
   void _editText(index, text) {
     setState(() {
-      _input[index] = text;
+      _tags[index] = text;
     });
   }
 
-  // void _copyHash(value) {
-  //   setState(() {
-  //     final data = ClipboardData(text: value);
-  //     await Clipboard.setData(data);
-  //     print("コピーしたよ");
-  //   });
-  // }
+  Future<String> _getTitle(documentId) async {
+    DocumentSnapshot titleGet = await categorys.doc(documentId).get();
+    print(titleGet);
+    Map<String, dynamic> record = titleGet.data();
+    setState(() {
+      _title = record['title'];
+      print(record['tags'].map((a) => a.toString()));
+      print(record['tags']);
+      _tags = record['tags'].cast<String>();
+    });
+  }
+
+  void _copyHash(value) async {
+    final data = ClipboardData(text: '#' + value);
+    await Clipboard.setData(data);
+    print("コピー!");
+  }
 
   @override
   Widget build(BuildContext context) {
+    final _tagId = ModalRoute.of(context).settings.arguments;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(_title),
       ),
       body: Center(
         child: Column(
@@ -69,16 +78,16 @@ class _MyHomePageState extends State<TagsPage> {
             Text(
               "Ready to have hashtags",
             ),
-            ..._input.map((i) => Row(
+            ..._tags.map((i) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
-                          onPressed: () => _decleaseHash(_input.indexOf(i)),
+                          onPressed: () => _decleaseHash(_tags.indexOf(i)),
                           child: Icon(Icons.close)),
                       Container(
                         child: TextField(
                           onChanged: (text) =>
-                              _editText(_input.indexOf(i), text),
+                              _editText(_tags.indexOf(i), text),
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'New hashtag',
@@ -91,7 +100,8 @@ class _MyHomePageState extends State<TagsPage> {
                         style: Theme.of(context).textTheme.headline4,
                       ),
                       ElevatedButton(
-                          onPressed: _incrementHash, child: Icon(Icons.copy)),
+                          onPressed: () => _copyHash(i),
+                          child: Icon(Icons.copy)),
                     ])),
             ElevatedButton(
               onPressed: _incrementHash,
@@ -99,21 +109,25 @@ class _MyHomePageState extends State<TagsPage> {
             ),
             // Spacer(flex: 4),
             ElevatedButton(
-              child: const Text('まとめてコピー'),
+              onPressed: () => _getTitle(_tagId),
+              child: const Text('まとめてコピー（仮）'),
               style: ElevatedButton.styleFrom(
                 primary: Colors.orange[200],
                 onPrimary: Colors.black,
                 elevation: 8,
               ),
-              onPressed: () {},
+            ),
+            ElevatedButton(
+              onPressed: () => _getTitle(_tagId),
+              child: const Text('アップデート'),
+              style: ElevatedButton.styleFrom(
+                primary: Colors.orange[200],
+                onPrimary: Colors.black,
+                elevation: 8,
+              ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementHash,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
