@@ -45,20 +45,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   var _inputController = TextEditingController();
   var _texts = [];
+  var txt = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getHash();
+  }
 
   void _incrementHash() async {
     await categorys.doc().set({'title': '', 'tags': []});
     _getHash();
-    print('-increase---------------');
-    // setState(() {
-    //   _input.add('#hashtag');
-    // });
   }
 
+  void _editToggle(id) {}
+
   void _decleaseHash(index, documentId) async {
-    print('----delete------');
-    print(documentId);
-    print(index);
     await categorys.doc(documentId).delete();
     setState(() {
       hashLists.removeAt(index);
@@ -66,22 +68,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _editText(id, text) async {
-    await categorys.doc(id).set({'title': text});
-    _inputController = text;
-    print('------update----');
-    // setState(() {
-    //   hashLists. = hashlist.docs;
-    // });
+    await categorys.doc(id).update({'title': text});
   }
 
   Future<void> _saveText(id, text) async {
-    print('------------------');
-    print(text);
-    print(hashLists);
     await FirebaseFirestore.instance.collection('categorys').doc(id).set(text);
-    // setState(() {
-    //   hashLists. = hashlist.docs;
-    // });
   }
 
   Future<void> _saveHash(category) async {
@@ -93,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _handleCategoryTap(key) {
-    Navigator.of(context).pushNamed('/tags', arguments: key.id);
+    Navigator.of(context).pushNamed('/tags', arguments: key);
   }
 
   void _copyHash(value) async {
@@ -105,8 +96,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _getHash() async {
     final hashlist = await categorys.get();
-    print('------------------------------');
-    print(hashlist.docs.map((a) => a.data()['title']));
     setState(() {
       hashLists = hashlist.docs;
     });
@@ -134,20 +123,23 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Icon(Icons.close)),
                       Container(
                         child: TextField(
-                          // controller: _inputController,
-                          // controller: document['title'],
-                          onChanged: (text) => _editText(document.id, text),
+                          controller:
+                              TextEditingController(text: document['title']),
+                          onChanged: (txt) => _editText(document.id, txt),
                           decoration: InputDecoration(
-                            border: OutlineInputBorder(),
                             hintText: 'New hashtag',
                           ),
                           autofocus: true,
+                          readOnly: false,
                         ),
                         width: MediaQuery.of(context).size.width * 0.3,
                         // child: Text(document.data()['title'] ?? 'default'),
                       ),
                       ElevatedButton(
-                        onPressed: () => _handleCategoryTap(document),
+                        onPressed: () => {
+                          _getHash(),
+                          _handleCategoryTap(document),
+                        },
                         child: Icon(Icons.chevron_right_rounded),
                       ),
                       ElevatedButton(
