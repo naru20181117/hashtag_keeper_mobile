@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/': (BuildContext context) => MyHomePage(title: 'Hashtags Keeper'),
-        '/tags': (BuildContext context) => TagsPage(title: 'Hashtag'),
+        '/tags': (BuildContext context) => TagsPage(),
       },
     );
   }
@@ -98,9 +98,12 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "Ready to have hashtags",
-            ),
+            if (hashLists.isEmpty)
+              Text("Ready to have hashtags Titles\n Click HERE",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                  )),
             ...hashLists.map((document) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -120,10 +123,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           autofocus: true,
                           readOnly: false,
                         ),
-                        width: MediaQuery.of(context).size.width * 0.3,
+                        width: MediaQuery.of(context).size.width * 0.4,
                       ),
                       ElevatedButton(
                         onPressed: () => {
+                          _editText(document.id, txt,
+                              document['tags'].cast<String>()),
                           _handleCategoryTap(document),
                         },
                         child: Icon(Icons.chevron_right_rounded),

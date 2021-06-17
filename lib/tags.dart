@@ -27,6 +27,7 @@ class _TagsPageState extends State<TagsPage> {
 
   void initState() {
     super.initState();
+    controllers = List.generate(1, (i) => TextEditingController(text: ''));
 
     Future.delayed(Duration.zero, () {
       _updateData();
@@ -68,16 +69,16 @@ class _TagsPageState extends State<TagsPage> {
   void _editText(text) async {
     _setTags();
     await categorys.doc(_id).update({'title': _title, 'tags': _tags});
+    _setController();
   }
 
   void _copyHash(value) async {
-    final data = ClipboardData(text: '#' + value);
+    final data = ClipboardData(text: value);
     await Clipboard.setData(data);
     print("コピー!");
   }
 
   void _copyHashes() async {
-    _setTags();
     String hashtags = _tags.join(' ');
     final data = ClipboardData(text: hashtags);
     await Clipboard.setData(data);
@@ -87,7 +88,7 @@ class _TagsPageState extends State<TagsPage> {
   void _setTags() {
     setState(() {
       _tags = controllers.map((s) {
-        return s.text;
+        return _setHash(s.text);
       }).toList();
     });
   }
@@ -104,6 +105,11 @@ class _TagsPageState extends State<TagsPage> {
     });
   }
 
+  void _setHash(text) {
+    if (!RegExp(r'#.+').hasMatch(text)) text = '#' + text.trim();
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,13 +120,15 @@ class _TagsPageState extends State<TagsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "Ready to have hashtags",
-            ),
+            if (controllers.isEmpty)
+              Text("Ready to have hashtags\n Click HERE",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                  )),
             ...controllers.map((i) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // controllers.indexOf(i)
                       ElevatedButton(
                           onPressed: () => _decleaseHash(i.text),
                           child: Icon(Icons.close)),
@@ -129,11 +137,10 @@ class _TagsPageState extends State<TagsPage> {
                           controller: i,
                           onSubmitted: (text) => _editText(i.text),
                           decoration: InputDecoration(
-                            // border: OutlineInputBorder(),
                             hintText: 'New hashtag',
                           ),
                         ),
-                        width: MediaQuery.of(context).size.width * 0.3,
+                        width: MediaQuery.of(context).size.width * 0.5,
                       ),
                       ElevatedButton(
                           onPressed: () => _copyHash(i.text),
@@ -143,19 +150,10 @@ class _TagsPageState extends State<TagsPage> {
               onPressed: _incrementHash,
               child: Icon(Icons.add),
             ),
-            // Spacer(flex: 4),
             ElevatedButton(
               onPressed: () => _copyHashes(),
-              child: const Text('まとめてコピー（仮）'),
-              style: ElevatedButton.styleFrom(
-                primary: Colors.orange[200],
-                onPrimary: Colors.black,
-                elevation: 8,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => _updateData(),
-              child: const Text('アップデート'),
+              child:
+                  Column(children: [const Icon(Icons.copy), const Text('ALL')]),
               style: ElevatedButton.styleFrom(
                 primary: Colors.orange[200],
                 onPrimary: Colors.black,
@@ -167,8 +165,6 @@ class _TagsPageState extends State<TagsPage> {
       ),
     );
   }
-
-  indexOf(TextEditingController i) {}
 }
 
 @override
